@@ -165,6 +165,42 @@ docker compose down
 docker compose down -v
 ```
 
+#### Ошибка `TLS handshake timeout` при сборке
+
+По умолчанию образы берутся с зеркала `dockerhub.timeweb.cloud` (см. `docker-compose.yml`). Если сборка всё ещё идёт на `registry-1.docker.io`, обновите файлы из репозитория и пересоберите:
+
+```bash
+docker compose build --no-cache
+docker compose up -d
+```
+
+**Вариант A — зеркало в Docker Desktop**
+
+1. Docker Desktop → Settings → Docker Engine  
+2. Вставьте содержимое файла `docker-daemon.example.json` (поле `registry-mirrors` и `dns`)  
+3. Apply & Restart  
+4. Снова: `docker compose up -d --build`
+
+**Вариант B — зеркало через `.env` в корне проекта**
+
+Скопируйте `.env.example` в `.env` и раскомментируйте строки с `dockerhub.timeweb.cloud`:
+
+```env
+NODE_IMAGE=dockerhub.timeweb.cloud/library/node:20-alpine
+PYTHON_IMAGE=dockerhub.timeweb.cloud/library/python:3.12-slim
+POSTGRES_IMAGE=dockerhub.timeweb.cloud/library/postgres:16
+```
+
+Затем:
+
+```bash
+docker compose --env-file .env up -d --build
+```
+
+**Вариант C — без Docker**
+
+Запустите только Postgres в Docker (`docker compose up -d postgres`), backend и frontend — локально (см. раздел ниже).
+
 ### 4. Локальная разработка (без Docker)
 
 **Backend:**

@@ -2,8 +2,8 @@ from pathlib import Path
 
 import asyncpg
 from asyncpg.exceptions import UndefinedTableError
-from contextlib import asynccontextmanager
 from typing import Optional
+
 from core.config import DATABASE_URL
 
 _DISHES_SEED_PATH = Path(__file__).resolve().parent / "seed_dishes.sql"
@@ -42,8 +42,10 @@ _DISH_IMAGE_URLS: tuple[tuple[str, str], ...] = (
     ("говядина с овощами", "/dishes/beef_with_vegetables.png"),
 )
 
+
 def _normalize_dish_name(name: str) -> str:
     return name.lower().strip().replace("ё", "е")
+
 
 class Database:
     def __init__(self):
@@ -54,7 +56,7 @@ class Database:
             self.pool = await asyncpg.create_pool(
                 DATABASE_URL,
                 min_size=1,
-                max_size=10
+                max_size=10,
             )
             print("PostgreSQL подключен")
             return True
@@ -67,6 +69,7 @@ class Database:
         if not self.pool:
             return
         await self.pool.execute(
+            """
             CREATE TABLE IF NOT EXISTS dishes (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL UNIQUE,
@@ -74,16 +77,19 @@ class Database:
                 description TEXT,
                 image_url VARCHAR(500)
             );
+            """
         )
         await self.pool.execute(
             "ALTER TABLE dishes ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)"
         )
         await self.pool.execute(
+            """
             CREATE TABLE IF NOT EXISTS dish_ingredients (
                 dish_id INTEGER NOT NULL REFERENCES dishes(id) ON DELETE CASCADE,
                 product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
                 PRIMARY KEY (dish_id, product_id)
             );
+            """
         )
         await self.pool.execute(
             "CREATE INDEX IF NOT EXISTS idx_dish_ingredients_product ON dish_ingredients(product_id)"
@@ -117,11 +123,19 @@ class Database:
             return
         for name, url in _DISH_IMAGE_URLS:
             await self.pool.execute(
+                """
                 UPDATE dishes SET image_url = $2
                 WHERE lower(trim(replace(name, 'ё', 'е'))) = lower(trim(replace($1, 'ё', 'е')))
+                """,
+                name,
+                url,
+            )
+
+    async def ensure_menu_dishes_schema(self) -> None:
         if not self.pool:
             return
         await self.pool.execute(
+            """
             CREATE TABLE IF NOT EXISTS menu_dishes (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
@@ -132,13 +146,16 @@ class Database:
                 upload_filename VARCHAR(255),
                 created_at TIMESTAMPTZ DEFAULT NOW()
             );
+            """
         )
         await self.pool.execute(
+            """
             CREATE TABLE IF NOT EXISTS menu_dish_products (
                 menu_dish_id INTEGER NOT NULL REFERENCES menu_dishes(id) ON DELETE CASCADE,
                 product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
                 PRIMARY KEY (menu_dish_id, product_id)
             );
+            """
         )
         await self.pool.execute(
             "CREATE INDEX IF NOT EXISTS idx_menu_dishes_category ON menu_dishes(category)"
@@ -181,26 +198,112 @@ class Database:
                 result = []
                 for d in dishes:
                     row = await conn.fetchrow(
+                        """
                         INSERT INTO menu_dishes (
                             name, category, description, status,
                             seasonality_percent, upload_filename
                         ) VALUES ($1, $2, $3, $4, $5, $6)
                         RETURNING id
-                            INSERT INTO menu_dish_products (menu_dish_id, product_id)
-                            VALUES ($1, $2)
-                            ON CONFLICT DO NOTHING
+                        """,
+                        d["name"],
+                        d.get("category") or "основное",
+                        d.get("description"),
+                        d.get("status") or "in_menu",
+                        d.get("seasonality_percent") or 0,
+                        upload_filename,
+                    )
+                    mid = row["id"]
+                    for ing in d.get("ingredients") or []:
+                        pid = ing.get("product_id")
+                        if pid:
+                            await conn.execute(
+                                """
+                                INSERT INTO menu_dish_products (menu_dish_id, product_id)
+                                VALUES ($1, $2)
+                                ON CONFLICT DO NOTHING
+                                """,
+                                mid,
+                                pid,
+                            )
+                    result.append({**d, "id": mid})
+                return result
+
+    async def fetch_menu_dishes(self) -> list:
         from datetime import date
 
         today = date.today()
         if not self.pool:
             return []
         try:
-            return await self._fetch_catalog_dishes_for_menu(set(), today)
+            rows = await self.pool.fetch(
+                """
+                SELECT id, name, category, description, status,
+                       seasonality_percent, upload_filename, created_at
+                FROM menu_dishes
+                ORDER BY category, name
+                """
+            )
         except UndefinedTableError:
-            return []
+            return await self._fetch_catalog_dishes_for_menu(set(), today)
+
+        if not rows:
+            return await self._fetch_catalog_dishes_for_menu(set(), today)
+
+        dish_ids = [r["id"] for r in rows]
+        link_rows = await self.pool.fetch(
+            """
+            SELECT mdp.menu_dish_id AS dish_id, p.id, p.name, p.category,
+                   p.seasons, p.image_url
+            FROM menu_dish_products mdp
+            JOIN products p ON p.id = mdp.product_id
+            WHERE mdp.menu_dish_id = ANY($1::int[])
+            ORDER BY p.name
+            """,
+            dish_ids,
+        )
+        from services.menu_dish_builder import ingredient_season_variant
+        from services.seasonality import classify_ingredient
+
+        by_dish: dict[int, list] = {}
+        for lr in link_rows:
+            by_dish.setdefault(lr["dish_id"], []).append(dict(lr))
+
+        out = []
+        for r in rows:
+            ingredients_raw = by_dish.get(r["id"], [])
+            ingredients = []
+            for p in ingredients_raw:
+                info = classify_ingredient(p, today)
+                ingredients.append(
+                    {
+                        "product_id": p["id"],
+                        "name": p["name"],
+                        "category": p.get("category") or "",
+                        "seasons": list(p.get("seasons") or []),
+                        "image_url": p.get("image_url"),
+                        "season_label": info.label,
+                        "season_variant": ingredient_season_variant(p, today),
+                    }
+                )
+            out.append(
+                {
+                    "id": r["id"],
+                    "name": r["name"],
+                    "category": r["category"],
+                    "description": r.get("description"),
+                    "image_url": None,
+                    "status": r.get("status") or "in_menu",
+                    "seasonality_percent": r.get("seasonality_percent") or 0,
+                    "ingredients": ingredients,
+                }
+            )
+        menu_names = {_normalize_dish_name(d["name"]) for d in out}
+        try:
+            catalog = await self._fetch_catalog_dishes_for_menu(menu_names, today)
         except Exception as exc:
             print(f"Справочник блюд не подгружен: {exc}")
-            return []
+            catalog = []
+        return out + catalog
 
     async def _fetch_catalog_dishes_for_menu(
         self, exclude_names: set, today
@@ -209,14 +312,17 @@ class Database:
             return []
         try:
             rows = await self.pool.fetch(
+                """
                 SELECT id, name, category, description, image_url
                 FROM dishes
                 ORDER BY category, name
+                """
             )
         except UndefinedTableError:
             return []
 
         from services.menu_dish_builder import (
+            dish_menu_status,
             dish_seasonality_percent,
             ingredient_season_variant,
         )
@@ -227,11 +333,58 @@ class Database:
 
         dish_ids = [r["id"] for r in rows]
         link_rows = await self.pool.fetch(
+            """
             SELECT di.dish_id, p.id, p.name, p.category, p.seasons, p.image_url
             FROM dish_ingredients di
             JOIN products p ON p.id = di.product_id
             WHERE di.dish_id = ANY($1::int[])
             ORDER BY p.name
+            """,
+            dish_ids,
+        )
+        by_dish: dict[int, list] = {}
+        for lr in link_rows:
+            by_dish.setdefault(lr["dish_id"], []).append(dict(lr))
+
+        out = []
+        for r in rows:
+            norm = _normalize_dish_name(r["name"])
+            if norm in exclude_names:
+                continue
+            ingredients_raw = by_dish.get(r["id"], [])
+            ingredients = []
+            for p in ingredients_raw:
+                info = classify_ingredient(p, today)
+                ingredients.append(
+                    {
+                        "product_id": p["id"],
+                        "name": p["name"],
+                        "category": p.get("category") or "",
+                        "seasons": list(p.get("seasons") or []),
+                        "image_url": p.get("image_url"),
+                        "season_label": info.label,
+                        "season_variant": ingredient_season_variant(p, today),
+                    }
+                )
+            pct = dish_seasonality_percent(ingredients, today)
+            status = dish_menu_status(
+                ingredients, today, seasonality_percent=pct, catalog_only=True
+            )
+            out.append(
+                {
+                    "id": r["id"],
+                    "name": r["name"],
+                    "category": r["category"] or "блюдо",
+                    "description": r.get("description"),
+                    "image_url": r.get("image_url"),
+                    "status": status,
+                    "seasonality_percent": pct,
+                    "ingredients": ingredients,
+                }
+            )
+        return out
+
+    async def ensure_product_image_urls(self) -> None:
         if not self.pool:
             return
         await self.pool.execute(
@@ -252,16 +405,21 @@ class Database:
     async def fetch_products(self):
         if not self.pool:
             return []
-
-        rows = await self.pool.fetch("""
+        rows = await self.pool.fetch(
+            """
             SELECT id, name, category, cuisine_types, seasons, image_url
             FROM products
             ORDER BY category, name
+            """
+        )
+        return [dict(row) for row in rows]
+
+    async def fetch_farmers_by_product(self, product_name: str):
         if not self.pool:
             return []
-
         pn = product_name.lower().strip()
         rows = await self.pool.fetch(
+            """
             SELECT * FROM farmers f
             WHERE f.product_id IN (SELECT id FROM products WHERE lower(trim(name)) = $1)
                OR lower(trim(f.product_name)) = $1
@@ -271,16 +429,27 @@ class Database:
                     AND $1 LIKE '%' || lower(trim(f.product_name)) || '%'
                   )
             ORDER BY name
+            """,
+            pn,
+        )
+        return [dict(row) for row in rows]
+
+    async def fetch_farmers_by_category(self, category: str):
         if not self.pool:
             return []
-
-        rows = await self.pool.fetch("""
+        rows = await self.pool.fetch(
+            """
             SELECT * FROM farmers
             WHERE category = $1
             ORDER BY name
+            """,
+            category,
+        )
+        return [dict(row) for row in rows]
+
+    async def fetch_all_farmers(self):
         if not self.pool:
             return []
-
         rows = await self.pool.fetch("SELECT * FROM farmers ORDER BY name")
         return [dict(row) for row in rows]
 
@@ -307,25 +476,21 @@ class Database:
             return {}
         try:
             rows = await self.pool.fetch(
+                """
                 SELECT di.product_id, array_agg(d.name ORDER BY d.name) AS names
                 FROM dish_ingredients di
                 JOIN dishes d ON d.id = di.dish_id
                 WHERE di.product_id = ANY($1::int[])
                 GROUP BY di.product_id
-        if not self.pool:
-            return False
+                """,
+                product_ids,
+            )
+        except UndefinedTableError:
+            return {}
+        out: dict = {}
+        for r in rows:
+            out[r["product_id"]] = list(r["names"] or [])
+        return out
 
-        try:
-            await self.pool.execute("TRUNCATE TABLE farmers RESTART IDENTITY")
 
-            for farmer in excel_data:
-                await self.pool.execute("""
-                    INSERT INTO farmers (
-                        name,
-                        product_name,
-                        category,
-                        region,
-                        description,
-                        website_url,
-                        product_url
-                    ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+db = Database()

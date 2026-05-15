@@ -1,13 +1,11 @@
-FROM node:20-alpine
+ARG NODE_IMAGE=dockerhub.timeweb.cloud/library/node:20-alpine
+FROM ${NODE_IMAGE}
 
 WORKDIR /app
 
-# Копируем package.json и устанавливаем зависимости
 COPY package*.json ./
 RUN npm install
 
-# Копируем остальной код
 COPY . .
 
-# Запускаем dev сервер
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
