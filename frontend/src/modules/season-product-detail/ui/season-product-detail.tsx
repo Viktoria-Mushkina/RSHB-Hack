@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { calendarProductImageSrc } from "../../../shared/lib/calendar-product-image";
 import { farmerExternalUrl } from "../../../shared/lib/farmer-external-url";
 import { menuDishCountLabel } from "../../../shared/lib/menu-dish-count";
@@ -38,6 +39,7 @@ export function SeasonProductDetail({
   hasMenu,
   onClose,
 }: SeasonProductDetailProps) {
+  const navigate = useNavigate();
   const badge = resolveSeasonBadge(product, menuCard);
   const range = seasonRangeLabel(product, year);
   const img = calendarProductImageSrc(product);
@@ -153,7 +155,11 @@ export function SeasonProductDetail({
         )}
       </section>
 
-      <button type="button" className={styles.dishesBtn}>
+      <button
+        type="button"
+        className={styles.dishesBtn}
+        onClick={() => navigate(`/menu?ingredientId=${product.id}`)}
+      >
         Посмотреть блюда
         <img
           src="/icons/bracket-icon.svg"
