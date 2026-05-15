@@ -1,0 +1,15 @@
+@font-face {
+  font-family: Onest;
+  src: url("../fonts/Onest-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter Tight";
+  src: url("../fonts/InterTight-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}

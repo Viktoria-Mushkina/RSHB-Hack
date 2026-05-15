@@ -1,0 +1,119 @@
+.dialog {
+  background: #fff;
+  border-radius: 24px;
+  padding: 24px 26px 22px;
+  max-width: 480px;
+  width: 100%;
+  max-height: min(90vh, 640px);
+  overflow: visible;
+  box-sizing: border-box;
+  font-family: Onest, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-family: "Inter Tight", Onest, sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--r-text);
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: var(--r-muted);
+}
+
+.ingredientsList {
+  composes: scrollLight from "../../../shared/styles/custom-scrollbar.module.css";
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: min(240px, 40vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.ingredientRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--r-surface);
+  border-radius: 12px;
+}
+
+.ingredientName {
+  font-size: 15px;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.ingredientName::first-letter {
+  text-transform: uppercase;
+}
+
+.removeBtn {
+  border: none;
+  background: transparent;
+  color: var(--r-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.removeBtn:hover {
+  color: #9a3412;
+}
+
+.addRow {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.emptyHint {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--r-muted);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btnSecondary,
+.btnPrimary {
+  border: none;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-family: Onest, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnSecondary {
+  background: var(--r-surface);
+  color: var(--r-text);
+}
+
+.btnPrimary {
+  background: var(--r-accent);
+  color: #fff;
+}
+
+.btnPrimary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

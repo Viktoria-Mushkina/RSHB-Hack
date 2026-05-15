@@ -1,0 +1,68 @@
+.scrollLight {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(241, 161, 14, 0.65) transparent;
+}
+
+.scrollLight::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollLight::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollLight::-webkit-scrollbar-thumb {
+  background: rgba(241, 161, 14, 0.55);
+  border-radius: 8px;
+}
+
+.scrollLight::-webkit-scrollbar-thumb:hover {
+  background: rgba(241, 161, 14, 0.75);
+}
+
+.scrollDark {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.45) transparent;
+}
+
+.scrollDark::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollDark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollDark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.38);
+  border-radius: 8px;
+}
+
+.scrollDark::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.scrollWarm {
+  scrollbar-width: thin;
+  scrollbar-color: #fff transparent;
+}
+
+.scrollWarm::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollWarm::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollWarm::-webkit-scrollbar-thumb {
+  background: #fff;
+  border-radius: 8px;
+}
+
+.scrollWarm::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.85);
+}

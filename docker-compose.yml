@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: rshb-postgres
+    environment:
+      POSTGRES_USER: rshb_user
+      POSTGRES_PASSWORD: rshb_password
+      POSTGRES_DB: rshb_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - rshb-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rshb_user -d rshb_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: rshb-backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://rshb_user:rshb_password@postgres:5432/rshb_db
+      FARMERS_EXCEL_PATH: /app/data/farmers.xlsx
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - rshb-network
+
+  frontend:
+    build: ./frontend
+    container_name: rshb-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_PROXY_TARGET: http://backend:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - rshb-network
+
+volumes:
+  postgres_data:
+
+networks:
+  rshb-network:
+    driver: bridge

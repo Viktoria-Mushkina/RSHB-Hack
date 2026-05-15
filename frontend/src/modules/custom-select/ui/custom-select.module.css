@@ -1,0 +1,271 @@
+.root {
+  position: relative;
+  display: inline-block;
+  max-width: min(320px, 100%);
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.root.rootFit {
+  max-width: 100%;
+  width: fit-content;
+}
+
+.rootBlock {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.rootBlock .trigger {
+  width: 100%;
+}
+
+.root.rootFit .trigger {
+  width: auto;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 12px 8px 17px;
+  background: var(--r-dark);
+  border: 1px solid var(--r-bg);
+  border-radius: 15px;
+  color: #fff;
+  font-family: Onest, system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+
+.trigger:hover {
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid rgba(241, 161, 14, 0.55);
+  outline-offset: 2px;
+}
+
+.triggerText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+}
+
+.triggerText:not(:has(> *)) {
+  display: inline-block;
+  text-transform: lowercase;
+}
+
+.triggerText:not(:has(> *))::first-letter {
+  text-transform: uppercase;
+}
+
+.triggerPrefix {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.triggerColon {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 400;
+}
+
+.triggerValue {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.triggerPrefix::first-letter,
+.triggerValue::first-letter {
+  text-transform: uppercase;
+}
+
+.rootLight .triggerPrefix {
+  color: var(--r-muted);
+}
+
+.rootLight .triggerColon {
+  color: var(--r-muted);
+}
+
+.rootLight .triggerValue {
+  font-weight: 600;
+  color: var(--r-text);
+}
+
+.chevron {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  background: no-repeat center / contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='1.2' stroke-linecap='round' d='M1 1.5L6 6.5L11 1.5'/%3E%3C/svg%3E");
+  opacity: 0.9;
+  transition: transform 0.18s ease;
+}
+
+.trigger[aria-expanded="true"] .chevron {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  z-index: 1100;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  bottom: auto;
+  min-width: 100%;
+  max-width: min(320px, calc(100vw - 32px));
+  overflow-x: hidden;
+  padding: 8px 0;
+  background: #2e2c28;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.dropdownCompact {
+  overflow-y: visible;
+  max-height: none;
+}
+
+.dropdownScrollable {
+  max-height: min(280px, calc(100vh - 120px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dropdownUp {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.rootFit .dropdown {
+  right: 0;
+  left: auto;
+}
+
+.group {
+  margin: 0;
+}
+
+.groupSep {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.groupLabel {
+  padding: 6px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  margin: 0;
+}
+
+.option {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: Onest, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  text-transform: lowercase;
+}
+
+.option::first-letter {
+  text-transform: uppercase;
+}
+
+.option:hover {
+  background: rgba(241, 161, 14, 0.12);
+}
+
+.optionActive {
+  background: rgba(241, 161, 14, 0.22);
+  color: #fff;
+  font-weight: 500;
+}
+
+.rootLight .trigger {
+  background: transparent;
+  border: 1px solid var(--r-text);
+  color: var(--r-text);
+}
+
+.rootLight .trigger:focus-visible {
+  outline: 2px solid var(--r-accent);
+  outline-offset: 2px;
+}
+
+.rootLight .chevron {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23363430' stroke-width='1.2' stroke-linecap='round' d='M1 1.5L6 6.5L11 1.5'/%3E%3C/svg%3E");
+}
+
+.rootLight .dropdown {
+  background: #fff;
+  border: 1px solid rgba(54, 52, 48, 0.12);
+  box-shadow: none;
+}
+
+.rootLight .groupSep {
+  border-top-color: rgba(54, 52, 48, 0.1);
+}
+
+.rootLight .groupLabel {
+  color: var(--r-muted);
+}
+
+.rootLight .option {
+  color: var(--r-text);
+}
+
+.rootLight .option:hover {
+  background: rgba(241, 161, 14, 0.1);
+}
+
+.rootLight .optionActive {
+  background: rgba(241, 161, 14, 0.2);
+  color: var(--r-text);
+}

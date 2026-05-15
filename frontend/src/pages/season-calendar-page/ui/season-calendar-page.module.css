@@ -1,0 +1,75 @@
+.controlsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 86px;
+  flex-shrink: 0;
+}
+
+.pillSwitch {
+  position: relative;
+  display: flex;
+  height: 60px;
+  border-radius: 20px;
+  background: var(--r-surface);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.pillSwitchWide {
+  min-width: 280px;
+  flex: 1 1 320px;
+  max-width: 380px;
+}
+
+.pillSwitchNarrow {
+  min-width: 260px;
+  flex: 0 1 340px;
+}
+
+.pillHighlight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background: var(--r-accent);
+  opacity: 0.6;
+  border-radius: 15px;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.pillHighlightRight {
+  transform: translateX(100%);
+}
+
+.pillOption {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: "Inter Tight", Onest, sans-serif;
+  font-size: 21px;
+  font-weight: 400;
+  color: var(--r-text);
+  padding: 0 16px;
+}
+
+.pillOption img {
+  width: 30px;
+  height: 30px;
+  display: block;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--r-muted);
+  font-size: 16px;
+}

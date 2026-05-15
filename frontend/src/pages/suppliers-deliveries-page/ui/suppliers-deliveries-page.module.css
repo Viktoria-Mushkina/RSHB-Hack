@@ -1,0 +1,38 @@
+.placeholderWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--r-warm);
+  border-radius: 30px;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder {
+  max-width: 520px;
+  text-align: center;
+  padding: 48px 32px;
+}
+
+.placeholderBadge {
+  margin: 0 0 14px;
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 14px;
+  background: rgba(241, 161, 14, 0.22);
+  color: #9a3412;
+  font-family: Onest, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.placeholderText {
+  margin: 0;
+  font-family: Onest, sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--r-text);
+}
